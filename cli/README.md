@@ -1,9 +1,4 @@
-tiny todo CLI
-============
+Task Tracker CLI
+================
 
-simple cli task manager with sync capabilities.
-
-usage
------
-
-```
+simple cli task manager that saves to JSON.
