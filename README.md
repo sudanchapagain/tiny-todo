@@ -3,18 +3,17 @@
 tiny todo
 ========
 
-A Jetpack Compose android application written to explore Jetpack Compose.
+A Jetpack Compose android application written to explore Jetpack Compose
+including a cli which saves tasks to `~/Documents/.todo.json`.
 
-Features
---------
+#### features
 
-- Create tasks
-- Delete tasks
-- Persistent task
-- Filter by task's status
-- Change task's status as completed
+- create tasks
+- delete tasks
+- persistent task
+- filter by task's status
+- change task's status as completed
 
-Screenshot
-----------
+#### screenshot
 
 ![A screenshot of application showcasing creating new task, list of tasks, and deleting task](./docs/todo.png)
