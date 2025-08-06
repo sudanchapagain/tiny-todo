@@ -5,9 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,11 +17,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import np.com.sudanchapagain.tinytodo.ui.theme.tinyTodoTheme
+import kotlinx.coroutines.launch
+import np.com.sudanchapagain.tinytodo.ui.theme.TinyTodoTheme
 import np.com.sudanchapagain.tinytodo.view.TaskViewModel
 
 data class Task(val title: String, val isCompleted: Boolean)
@@ -31,17 +36,13 @@ enum class Filter {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // enables edge-to-edge layout <https://developer.android.com/develop/ui/views/layout/edge-to-edge>
         enableEdgeToEdge()
 
         val viewModel: TaskViewModel by viewModels()
         setContent {
-            // custom Material3 theme
-            tinyTodoTheme {
-                // scaffold provides a layout structure with slots for top bars, FABs, etc.
+            TinyTodoTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
-                    // main composable function
-                    todoApp(
+                    TodoApp(
                         modifier = Modifier.padding(paddingValues), viewModel = viewModel
                     )
                 }
@@ -50,126 +51,153 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun todoApp(modifier: Modifier = Modifier, viewModel: TaskViewModel) {
-    val tasks by viewModel.tasks.collectAsState() // Observe tasks
+fun TodoApp(modifier: Modifier = Modifier, viewModel: TaskViewModel) {
+    val tasks by viewModel.tasks.collectAsState()
     var filter by remember { mutableStateOf(Filter.All) }
-    var showDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showBottomSheet by remember { mutableStateOf(false) }
 
-    // main column layout
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false }, sheetState = sheetState
+        ) {
+            AddTaskBottomSheet(
+                onAdd = { title ->
+                    viewModel.addTask(title)
+                    showBottomSheet = false
+                })
+        }
+    }
+
     Column(modifier = modifier.padding(16.dp)) {
-        // header row
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "tiny todo", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge
-            )
+            Text("tiny todo", fontWeight = FontWeight.Black, style = MaterialTheme.typography.titleLarge)
             Row {
-                filterOption("All", Filter.All, filter) { filter = it }
-                filterOption("Active", Filter.Active, filter) { filter = it }
+                FilterOption("All", Filter.All, filter) { filter = it }
+                FilterOption("Active", Filter.Active, filter) { filter = it }
             }
         }
 
-        // LazyColumn for efficiently rendering the task list
-        // <https://developer.android.com/develop/ui/compose/lists>
         LazyColumn(modifier = Modifier.weight(1f)) {
-            // filtering based on selected filter
-            items(tasks.filter { filter == Filter.All || !it.isCompleted }) { taskEntity ->
+            items(items = tasks.filter { filter == Filter.All || !it.isCompleted }, key = { it.id }) { taskEntity ->
                 val task = Task(title = taskEntity.title, isCompleted = taskEntity.isCompleted)
-                taskItem(task = task, onCheckedChange = { isChecked ->
+                SwipeToDeleteTaskItem(task = task, onCheckedChange = { isChecked ->
                     viewModel.updateTask(taskEntity.copy(isCompleted = isChecked))
                 }, onDelete = { viewModel.deleteTask(taskEntity) })
             }
         }
 
-        // to open new task dialog
         Button(
-            onClick = { showDialog = true }, modifier = Modifier.align(Alignment.CenterHorizontally)
+            onClick = { showBottomSheet = true }, modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text("Add New Task")
+            Text(
+                modifier = Modifier.padding(
+                    start = 16.dp, end = 16.dp
+                ),
+                text = "Add task",
+            )
         }
-    }
-
-    if (showDialog) {
-        addTaskDialog(onDismiss = { showDialog = false }, onAdd = { title ->
-            viewModel.addTask(title)
-            showDialog = false
-        })
     }
 }
 
 @Composable
-fun addTaskDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
+fun AddTaskBottomSheet(onAdd: (String) -> Unit) {
     var title by remember { mutableStateOf("") }
 
-    // pretty self-explanatory
-    AlertDialog(
-        onDismissRequest = onDismiss, title = {
-            Text(
-                "Add New Task",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        text = {
-            TextField(
-                value = title,
-                onValueChange = { title = it },
-                singleLine = true,
-                placeholder = { Text("Please enter a title") }
-            )
-        },
-        confirmButton = {
-            Button(onClick = { if (title.isNotEmpty()) onAdd(title) }, content = { Text("Add") })
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-        tonalElevation = 0.dp
-    )
-}
-
-@Composable
-fun filterOption(label: String, option: Filter, selectedFilter: Filter, onFilterSelected: (Filter) -> Unit) {
-    // TextButton to select a filter (All or Active)
-    TextButton(onClick = { onFilterSelected(option) }) {
+    Column(modifier = Modifier.padding(16.dp)) {
         Text(
-            text = label,
-            fontWeight = if (option == selectedFilter) FontWeight.Bold else FontWeight.Normal
+            "Add task",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            singleLine = true,
+            placeholder = { Text("enter title") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = { if (title.isNotEmpty()) onAdd(title) }, modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(
+                modifier = Modifier.padding(
+                    start = 16.dp, end = 16.dp
+                ), text = "Add"
+            )
+        }
     }
 }
 
 @Composable
-fun taskItem(task: Task, onCheckedChange: (Boolean) -> Unit, onDelete: () -> Unit) {
-    var showDeleteBox by remember { mutableStateOf(false) }
+fun SwipeToDeleteTaskItem(
+    task: Task, onCheckedChange: (Boolean) -> Unit, onDelete: () -> Unit
+) {
+    val offsetX = remember { Animatable(0f) }
+    val deleteThreshold = -420f
 
-    Box(modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
-        detectTapGestures(
-            onLongPress = { showDeleteBox = !showDeleteBox })
-    }) {
-        // Row representing a single task with a checkbox and title
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    val coroutineScope = rememberCoroutineScope()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Red.copy(alpha = 0.2f))
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(onDragEnd = {
+                    coroutineScope.launch {
+                        if (offsetX.value < deleteThreshold) {
+                            offsetX.animateTo(
+                                targetValue = -1000f, animationSpec = spring(stiffness = Spring.StiffnessLow)
+                            )
+                            onDelete()
+                        } else {
+                            offsetX.animateTo(
+                                targetValue = 0f, animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                            )
+                        }
+                    }
+                }, onHorizontalDrag = { change, dragAmount ->
+                    change.consume()
+                    coroutineScope.launch {
+                        offsetX.snapTo(offsetX.value + dragAmount)
+                    }
+                })
+            }) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .offset { IntOffset(offsetX.value.toInt(), 0) }
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(12.dp)) {
             Checkbox(
                 checked = task.isCompleted, onCheckedChange = onCheckedChange, colors = CheckboxDefaults.colors(
-                    checkedColor = Color.LightGray
-                )
+                    checkedColor = Color.Gray, uncheckedColor = MaterialTheme.colorScheme.onSurface
+                ), modifier = Modifier.size(24.dp)
             )
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                task.title, modifier = Modifier.weight(1f).padding(start = 8.dp)
+                task.title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f)
             )
         }
+    }
+}
 
-        if (showDeleteBox) {
-            Box(
-                modifier = Modifier.align(Alignment.CenterEnd).clickable { onDelete() }.padding(4.dp)
-                    .background(MaterialTheme.colorScheme.error, MaterialTheme.shapes.small)
-            ) {
-                Text("Delete", color = Color.White, modifier = Modifier.padding(8.dp))
-            }
-        }
+@Composable
+fun FilterOption(label: String, option: Filter, selectedFilter: Filter, onFilterSelected: (Filter) -> Unit) {
+    TextButton(onClick = { onFilterSelected(option) }) {
+        Text(
+            text = label, fontWeight = if (option == selectedFilter) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }

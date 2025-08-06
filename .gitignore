@@ -18,3 +18,7 @@ gradle-build/
 crashlytics-build.properties
 *.log
 build/
+release/
+release
+debug/
+.kotlin/
