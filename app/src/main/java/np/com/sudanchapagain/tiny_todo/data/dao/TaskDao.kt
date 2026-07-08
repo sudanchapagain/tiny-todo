@@ -1,7 +1,8 @@
-package np.com.sudanchapagain.tiny_todo.data
+package np.com.sudanchapagain.tiny_todo.data.dao
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import np.com.sudanchapagain.tiny_todo.data.entity.TaskEntity
 
 @Dao
 interface TaskDao {

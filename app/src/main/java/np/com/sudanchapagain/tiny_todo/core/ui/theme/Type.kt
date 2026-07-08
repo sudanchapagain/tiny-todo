@@ -1,4 +1,4 @@
-package np.com.sudanchapagain.tiny_todo.ui.theme
+package np.com.sudanchapagain.tiny_todo.core.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

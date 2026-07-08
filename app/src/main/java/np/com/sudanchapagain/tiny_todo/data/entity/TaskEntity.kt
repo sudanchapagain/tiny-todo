@@ -1,4 +1,4 @@
-package np.com.sudanchapagain.tiny_todo.data
+package np.com.sudanchapagain.tiny_todo.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

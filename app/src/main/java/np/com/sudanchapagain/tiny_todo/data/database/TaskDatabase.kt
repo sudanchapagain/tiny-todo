@@ -1,9 +1,11 @@
-package np.com.sudanchapagain.tiny_todo.data
+package np.com.sudanchapagain.tiny_todo.data.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import np.com.sudanchapagain.tiny_todo.data.dao.TaskDao
+import np.com.sudanchapagain.tiny_todo.data.entity.TaskEntity
 
 @Database(entities = [TaskEntity::class], version = 1, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
