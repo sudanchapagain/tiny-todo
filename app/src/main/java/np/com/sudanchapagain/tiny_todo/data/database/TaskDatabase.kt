@@ -18,8 +18,12 @@ abstract class TaskDatabase : RoomDatabase() {
         fun getDatabase(context: Context): TaskDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
-                    context.applicationContext, TaskDatabase::class.java, "task_database"
-                ).build().also { INSTANCE = it }
+                    context.applicationContext,
+                    TaskDatabase::class.java,
+                    "task_database"
+                ).build().also {
+                    INSTANCE = it
+                }
             }
         }
     }

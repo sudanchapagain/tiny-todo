@@ -31,7 +31,9 @@ import np.com.sudanchapagain.tiny_todo.domain.model.Task
 
 @Composable
 fun SwipeToDeleteTaskItem(
-    task: Task, onCheckedChange: (Boolean) -> Unit, onDelete: () -> Unit
+    task: Task,
+    onCheckedChange: (Boolean) -> Unit,
+    onDelete: () -> Unit
 ) {
     val offsetX = remember { Animatable(0f) }
     val deleteThreshold = -250f
@@ -49,18 +51,22 @@ fun SwipeToDeleteTaskItem(
                             if (offsetX.value < deleteThreshold) {
                                 offsetX.animateTo(
                                     targetValue = -1000f,
-                                    animationSpec = spring(stiffness = Spring.StiffnessLow)
+                                    animationSpec = spring(
+                                        stiffness = Spring.StiffnessLow
+                                    )
                                 )
                                 onDelete()
                             } else {
                                 offsetX.animateTo(
                                     targetValue = 0f,
-                                    animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                                    animationSpec = spring(
+                                        stiffness = Spring.StiffnessMedium
+                                    )
                                 )
                             }
                         }
                     },
-                    onHorizontalDrag = {  change, dragAmount ->
+                    onHorizontalDrag = { change, dragAmount ->
                         change.consume()
                         coroutineScope.launch {
                             offsetX.snapTo(offsetX.value + dragAmount)

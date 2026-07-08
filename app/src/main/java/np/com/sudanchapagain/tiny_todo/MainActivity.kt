@@ -25,7 +25,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TinyTodoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { paddingValues ->
                     HomeScreen(modifier = Modifier.padding(paddingValues))
                 }
             }

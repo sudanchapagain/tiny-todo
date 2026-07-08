@@ -47,9 +47,8 @@ fun AddTaskBottomSheet(onAdd: (String) -> Unit) {
             modifier = Modifier.align(Alignment.End)
         ) {
             Text(
-                modifier = Modifier.padding(
-                    start = 16.dp, end = 16.dp
-                ), text = "Add"
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                text = "Add"
             )
         }
     }

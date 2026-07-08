@@ -43,13 +43,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     if (showBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showBottomSheet = false }, sheetState = sheetState
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = sheetState
         ) {
             AddTaskBottomSheet(
                 onAdd = { title ->
                     viewModel.addTask(title)
                     showBottomSheet = false
-                })
+                }
+            )
         }
     }
 
@@ -74,12 +76,27 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(
-                items = tasks.filter { filter == Filter.All || !it.isCompleted },
-                key = { it.id }) { taskEntity ->
-                val task = Task(title = taskEntity.title, isCompleted = taskEntity.isCompleted)
-                SwipeToDeleteTaskItem(task = task, onCheckedChange = { isChecked ->
-                    viewModel.updateTask(taskEntity.copy(isCompleted = isChecked))
-                }, onDelete = { viewModel.deleteTask(taskEntity) })
+                items = tasks.filter {
+                    filter == Filter.All || !it.isCompleted
+                },
+                key = { it.id }
+            ) { taskEntity ->
+                val task = Task(
+                    title = taskEntity.title,
+                    isCompleted = taskEntity.isCompleted
+                )
+
+                SwipeToDeleteTaskItem(
+                    task = task,
+                    onCheckedChange = { isChecked ->
+                        viewModel.updateTask(
+                            taskEntity.copy(isCompleted = isChecked)
+                        )
+                    },
+                    onDelete = {
+                        viewModel.deleteTask(taskEntity)
+                    }
+                )
             }
         }
 
@@ -88,9 +105,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text(
-                modifier = Modifier.padding(
-                    start = 16.dp, end = 16.dp
-                ),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
                 text = "Add task",
             )
         }
