@@ -20,6 +20,6 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateTask(task: TaskEntity) {
-        dao.insertTask(task)
+        dao.updateTask(task)
     }
 }

@@ -1,105 +1,105 @@
 package np.com.sudanchapagain.tiny_todo.presentation.component
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import np.com.sudanchapagain.tiny_todo.domain.model.Task
 
 @Composable
 fun SwipeToDeleteTaskItem(
-    task: Task,
-    onCheckedChange: (Boolean) -> Unit,
-    onDelete: () -> Unit
+    task: Task, onCheckedChange: (Boolean) -> Unit, onDelete: () -> Unit, onClick: () -> Unit
 ) {
-    val offsetX = remember { Animatable(0f) }
-    val deleteThreshold = -250f
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else {
+                false
+            }
+        })
 
-    val coroutineScope = rememberCoroutineScope()
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Red.copy(alpha = 0.2f))
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        coroutineScope.launch {
-                            if (offsetX.value < deleteThreshold) {
-                                offsetX.animateTo(
-                                    targetValue = -1000f,
-                                    animationSpec = spring(
-                                        stiffness = Spring.StiffnessLow
-                                    )
-                                )
-                                onDelete()
-                            } else {
-                                offsetX.animateTo(
-                                    targetValue = 0f,
-                                    animationSpec = spring(
-                                        stiffness = Spring.StiffnessMedium
-                                    )
-                                )
-                            }
-                        }
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        change.consume()
-                        coroutineScope.launch {
-                            offsetX.snapTo(offsetX.value + dragAmount)
-                        }
-                    }
+    SwipeToDismissBox(
+        state = dismissState, enableDismissFromStartToEnd = false, backgroundContent = {
+            Box(
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(end = 24.dp)
                 )
             }
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .offset { IntOffset(offsetX.value.toInt(), 0) }
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(12.dp)
+        }) {
+        Surface(
+            onClick = onClick,
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Checkbox(
-                checked = task.isCompleted,
-                onCheckedChange = onCheckedChange,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = Color.Gray,
-                    uncheckedColor = MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = Modifier.size(24.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                TaskCheckbox(
+                    checked = task.isCompleted, onCheckedChange = onCheckedChange
+                )
 
-            Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            Text(
-                task.title,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f)
-            )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.Medium,
+                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                        color = if (task.isCompleted) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    if (task.description.isNotBlank()) {
+                        Text(
+                            text = task.description,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
         }
     }
 }

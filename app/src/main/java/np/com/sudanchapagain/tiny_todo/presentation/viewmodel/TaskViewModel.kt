@@ -16,26 +16,32 @@ class TaskViewModel @Inject constructor(
 ) : ViewModel() {
 
     val tasks = repository.getTasks().stateIn(
-            viewModelScope, SharingStarted.Lazily, emptyList()
-        )
+        viewModelScope, SharingStarted.Lazily, emptyList()
+    )
 
-    fun addTask(title: String) {
+    fun addTask(title: String, description: String = "") {
         viewModelScope.launch {
             repository.insertTask(
-                TaskEntity(title = title, isCompleted = false)
+                TaskEntity(title = title, description = description, isCompleted = false)
             )
-        }
-    }
-
-    fun deleteTask(task: TaskEntity) {
-        viewModelScope.launch {
-            repository.deleteTask(task)
         }
     }
 
     fun updateTask(task: TaskEntity) {
         viewModelScope.launch {
             repository.updateTask(task)
+        }
+    }
+
+    fun toggleTask(task: TaskEntity, isCompleted: Boolean) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(isCompleted = isCompleted))
+        }
+    }
+
+    fun deleteTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.deleteTask(task)
         }
     }
 }

@@ -6,13 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import np.com.sudanchapagain.tiny_todo.domain.model.Filter
 
-
 @Composable
 fun FilterOption(
-    label: String,
-    option: Filter,
-    selectedFilter: Filter,
-    onFilterSelected: (Filter) -> Unit
+    label: String, option: Filter, selectedFilter: Filter, onFilterSelected: (Filter) -> Unit
 ) {
     TextButton(onClick = { onFilterSelected(option) }) {
         Text(

@@ -24,10 +24,8 @@ object TaskModule {
         @ApplicationContext context: Context
     ): TaskDatabase {
         return Room.databaseBuilder(
-            context,
-            TaskDatabase::class.java,
-            "task_database"
-        ).build()
+            context, TaskDatabase::class.java, "task_database"
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides

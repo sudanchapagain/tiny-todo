@@ -6,11 +6,14 @@ import np.com.sudanchapagain.tiny_todo.data.entity.TaskEntity
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks")
+    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
     fun getAllTasks(): Flow<List<TaskEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: TaskEntity)
+
+    @Update
+    suspend fun updateTask(task: TaskEntity)
 
     @Delete
     suspend fun deleteTask(task: TaskEntity)

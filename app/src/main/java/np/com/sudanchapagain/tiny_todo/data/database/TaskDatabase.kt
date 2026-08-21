@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import np.com.sudanchapagain.tiny_todo.data.dao.TaskDao
 import np.com.sudanchapagain.tiny_todo.data.entity.TaskEntity
 
-@Database(entities = [TaskEntity::class], version = 1, exportSchema = false)
+@Database(entities = [TaskEntity::class], version = 2, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
@@ -18,10 +18,8 @@ abstract class TaskDatabase : RoomDatabase() {
         fun getDatabase(context: Context): TaskDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
-                    context.applicationContext,
-                    TaskDatabase::class.java,
-                    "task_database"
-                ).build().also {
+                    context.applicationContext, TaskDatabase::class.java, "task_database"
+                ).fallbackToDestructiveMigration().build().also {
                     INSTANCE = it
                 }
             }

@@ -12,7 +12,6 @@ lint/intermediates/
 *.apk
 *.ap_
 *.aab
-gradle-wrapper.properties
 gradle-build/
 .android/
 crashlytics-build.properties
